@@ -570,13 +570,11 @@ ffm_model ffm_train_on_disk(string tr_path, string va_path, ffm_parameter param)
         vector<ffm_int> outer_order(prob.meta.num_blocks);
         iota(outer_order.begin(), outer_order.end(), 0);
         random_shuffle(outer_order.begin(), outer_order.end());
-        int b = 0;
         for(auto blk : outer_order) {
             ffm_int l = prob.load_block(blk);
             vector<ffm_int> inner_order(l);
             iota(inner_order.begin(), inner_order.end(), 0);
             random_shuffle(inner_order.begin(), inner_order.end());
-            b = b + 1;
 
 
 #if defined USEOMP
@@ -594,9 +592,7 @@ ffm_model ffm_train_on_disk(string tr_path, string va_path, ffm_parameter param)
                 ffm_float r = param.normalization? prob.R[i] : 1;
 
                 ffm_double t = wTx(begin, end, r, model);
-                if(ii%1000 == 0){
-                  auc_saver.push_back(1/(1+exp(-t))*y);
-                }
+
 
                 ffm_double expnyt = exp(-y*t);
 
@@ -608,6 +604,15 @@ ffm_model ffm_train_on_disk(string tr_path, string va_path, ffm_parameter param)
 
                     wTx(begin, end, r, model, kappa, param.eta, param.lambda, true);
                 }
+                if(ii%100 == 7){
+#if defined USEOMP
+#pragma omp critical
+#endif
+                {
+                  ffm_double tt = wTx(begin, end, r, model);
+                  auc_saver.push_back(1/(1+exp(-tt))*y);
+                }
+            }
             }
         }
         sort(auc_saver.begin(),auc_saver.end(),[](ffm_float i,ffm_float j){return abs(i)<abs(j);});
