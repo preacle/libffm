@@ -624,7 +624,6 @@ ffm_model ffm_train_on_disk(string tr_path, string va_path, ffm_parameter param)
             M += 1;
           }
         }
-        cout<<b<<endl;
         double N = double(auc_saver.size()) - M;
         double AUC = (rank_sum - M*(M+1)/2)/(M*N);
         roc_auc = AUC;
